@@ -4,6 +4,7 @@ from retry import retry
 from datasets import load_dataset, Dataset
 from dotenv import load_dotenv
 import os
+import random
 load_dotenv()
 
 
@@ -12,7 +13,6 @@ AZURE_OPENAI_HOST = os.getenv('AZURE_OPENAI_HOST')
 GOOGLE_GENAI_KEY = os.getenv('GOOGLE_GENAI_KEY')
 TOGETHER_AI_KEY = os.getenv('TOGETHER_AI_KEY')
 
-breakpoint()
 @retry(tries=2, delay=5)
 def get_openai_response(messages, stop=None, max_tokens= 512):
     api_key = AZURE_OPENAI_KEY
@@ -86,15 +86,16 @@ def test_case(instruction, input, output):
     print(f'Real Output: {output}')
     return {'instruction':instruction,'input':input,'gpt-4o-mini': openai_response, 'gemini-1.5-flash':genai_response,'llama-3.1-8b':togetherai_response,'output':output}
 
-def test():
+def test(samples, dataset_name='ezuruce/medical-ai-evaluation'):
+    random.seed(76)
+    
     ds = load_dataset("lavita/ChatDoctor-HealthCareMagic-100k", split='train')
-    new_data = []
-    for i in range(10):
-        row = ds[i]
-        new_row = test_case(**row)
-        new_data.append(new_row)
+    sample_indexes = [random.randint(0,len(ds)-1) for _ in range(samples)]
+    ds = ds.select(sample_indexes)
+
+    new_data = [test_case(**row) for row in ds]
 
     new_ds = Dataset.from_list(new_data)
-    new_ds.push_to_hub('ezuruce/medical-ai-evaluation', private=True)
+    new_ds.push_to_hub(dataset_name, private=True)
 
-test()
+test(2, 'ezuruce/test')
