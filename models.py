@@ -75,7 +75,6 @@ def get_togetherai_response(messages,stop=None, max_tokens= 512):
 
 
 def test_case(instruction, input, output):
-    instruction += ' Give a concise response.'
     messages = [{'role': 'system','content': instruction},{'role':'user','content': input}]
     openai_response = get_openai_response(messages)
     genai_response = get_genai_response(messages)
@@ -98,4 +97,11 @@ def test(samples, dataset_name='ezuruce/medical-ai-evaluation'):
     new_ds = Dataset.from_list(new_data)
     new_ds.push_to_hub(dataset_name, private=True)
 
-test(2, 'ezuruce/test')
+
+def find_kw(ds, word):
+    df = ds.to_pandas()
+    filtered_df = df[df['Output'].str.contains(word, case=False, na=False)]
+    return filtered_df
+
+#test(2, 'ezuruce/test')
+#test(15, 'ezuruce/run')
