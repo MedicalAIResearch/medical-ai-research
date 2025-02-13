@@ -25,46 +25,52 @@ Example Response 4:
 diagnosis_system_message = '''Select a diseases that you feel will be of utmost importance and are the most risky.
 Respond with only the diseases and a [TRUE] or [FALSE] if they have been confirmed or not confirmed to have the disease or [MORE_INFO] if you do not have enough information.
 You are a medical AI assistant trained to analyze patient data and suggest potential conditions based on symptoms, medical history, and lifestyle factors. Your goal is to evaluate given conversational data as well as the diagnosis at that point and provide a new diagnosis based off new data if there is any.
-If there are multiple diseases such as headaches including migraine, cluster headache, and tension headache that are similar to each other in symptoms, say one is [TRUE] and put the other one at the end and say [ALSO_POSSIBLE]
+If more then one is [TRUE] you must set one as [ALSO_POSSIBLE]
 1. Base assessments on medical correlations and established patterns. When these similar diseases are no longer possible change them to [FALSE].
-Example Response
-1. Disease A - [True]
-2. Disease B - [False]
-3. Disease C - [MORE_INFO]
+Example Response:
+    1. Disease A - [TRUE]
+    2. Disease B - [FALSE]
+    3. Disease C - [MORE_INFO]
 '''
 
 
-def diagnose_disease(chat_messages,previous_diagnosis):
-    if previous_diagnosis == None:
-        messages = [{'role': 'system','content': diagnosis_system_message}, *chat_messages[1:]]
-    else: messages = [{'role': 'system','content': diagnosis_system_message}, *chat_messages[1:-2], previous_diagnosis,*chat_messages[-2:]]
-    diagnosis = get_model_response(messages)
+def _get_model_response(system_prompt, messages):
+    return get_model_response([{'role':'system','content':system_prompt}, *messages])
+
+
+def diagnose_disease(history, new_message, previous_diagnosis):
+    diagnosis_messages = [] if previous_diagnosis is None else [previous_diagnosis]
+    messages = [*history, *diagnosis_messages, new_message]
+    diagnosis = _get_model_response(diagnosis_system_message, messages)
     return diagnosis
 
-def evaluate_risk(chat_messages, disease):
-    messages = [{'role': 'system','content': risk_system_message.format(disease=disease)}, *chat_messages[1:]]
-    risk_factor = get_model_response(messages)
+def evaluate_risk(history, disease):
+    risk_factor = _get_model_response(risk_system_message.format(disease=disease), history)
     return risk_factor
 
 
 def patient_chat():
-    messages = []
     first_message = f'\nDoctor:\nHello, I am {doctor_name}. What brings you in today?\n'
+    
     print(first_message)
-    messages.append({'role': 'system','content': chat_system_message})
-    messages.append({'role':'assistant','content':first_message})
+    history = [{'role':'assistant','content':first_message}]
+
     running = True
     previous_diagnosis = None
     while running:
-        message = input('Patient:\n')
-        messages.append({'role': 'user','content': message})
-        response = get_model_response(messages)
-        messages.append({'role':'assistant','content':response})
-        risk = evaluate_risk(messages,'stroke')
-        diagnosis = diagnose_disease(messages,previous_diagnosis)
-        previous_diagnosis = {'role':'assistant','content':diagnosis}
+        new_message = {'role': 'user', 'content': input('Patient:\n')}
+        next_history = [*history, new_message]
+        response = _get_model_response(chat_system_message, next_history)
         print(f'\nDoctor:\n{response}')
-        print('Risk for stroke: ' + risk+'\n'+'Diagnosis Message:\n'+diagnosis+'\n')
+        
+        diagnosis = diagnose_disease(history, new_message, previous_diagnosis)
+        print('Diagnosis Message:\n'+diagnosis+'\n')
+
+        risk = evaluate_risk(next_history, 'stroke')
+        print('Risk for stroke: ' + risk)
+
+        history = next_history
+        previous_diagnosis = {'role':'assistant','content':diagnosis}
         # if diagnosis.count('[MOREINFO]') and risk.count('[MOREINFO]')== 0:
         #     running = False
 
