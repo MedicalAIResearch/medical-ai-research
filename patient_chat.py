@@ -1,5 +1,4 @@
 from models import get_openai_response as get_model_response
-import json
 
 doctor_name = 'Doctor Brandon'
 
@@ -33,6 +32,18 @@ Example Response:
     3. Disease C - [MORE_INFO]
 '''
 
+urgency_system_message = """You are a medical AI assistant assessing whether a patient's symptoms are urgent or not. 
+Base your response on medical patterns and provide clear guidance based on the symptoms provided.
+Return one of the following responses:
+[EMERGENCY] → Go to the hospital immediately (life-threatening).
+[URGENT_CARE] → Seek urgent care soon (serious but not life-threatening).
+[PRIMARY_CARE] → Schedule an appointment with a doctor (non-urgent concern).
+[MONITOR] → Watch symptoms and seek care if they worsen.
+[SAFE] → No medical attention needed.
+Example:
+User: I have a rash.
+Response: [MONITOR] → Watch symptoms and seek care if they worsen"""
+
 
 def _get_model_response(system_prompt, messages):
     return get_model_response([{'role':'system','content':system_prompt}, *messages])
@@ -44,10 +55,13 @@ def diagnose_disease(history, new_message, previous_diagnosis):
     diagnosis = _get_model_response(diagnosis_system_message, messages)
     return diagnosis
 
-def evaluate_risk(history, disease):
-    risk_factor = _get_model_response(risk_system_message.format(disease=disease), history)
+def evaluate_risk(next_history, disease):
+    risk_factor = _get_model_response(risk_system_message.format(disease=disease), next_history)
     return risk_factor
 
+def evaluate_urgency(next_history):
+    urgency = _get_model_response(urgency_system_message,next_history)
+    return urgency
 
 def patient_chat():
     first_message = f'\nDoctor:\nHello, I am {doctor_name}. What brings you in today?\n'
@@ -61,13 +75,16 @@ def patient_chat():
         new_message = {'role': 'user', 'content': input('Patient:\n')}
         next_history = [*history, new_message]
         response = _get_model_response(chat_system_message, next_history)
-        print(f'\nDoctor:\n{response}')
+        print(f'\nDoctor:\n{response}\n')
         
         diagnosis = diagnose_disease(history, new_message, previous_diagnosis)
         print('Diagnosis Message:\n'+diagnosis+'\n')
 
+        urgency = evaluate_urgency(next_history)
+        print(f'Urgency: {urgency}\n')
+
         risk = evaluate_risk(next_history, 'stroke')
-        print('Risk for stroke: ' + risk)
+        print('Risk for stroke: ' + risk +'\n')
 
         history = next_history
         previous_diagnosis = {'role':'assistant','content':diagnosis}
