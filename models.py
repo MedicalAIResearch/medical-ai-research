@@ -67,7 +67,7 @@ def get_togetherai_response(messages,stop=None, max_tokens= 512):
     }
     model = 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo'
     payload = {"messages": messages, "model": model, **generation_params}
-    response = requests.post(url, json=payload, headers=headers).json()
+    response = requests.post(url, json=payload, headers=headers, verify=False).json()
     content = response["choices"][0]["message"]["content"]
     content = content.strip('`')
     content = content.lstrip('json')
