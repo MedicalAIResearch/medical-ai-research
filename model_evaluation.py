@@ -5,7 +5,6 @@ from tqdm import tqdm
 import click
 from typing import List
 import re
-import os
 
 
 def clean_medical_phrase(keyword):
@@ -67,7 +66,7 @@ class MedicalSessionEvaluator():
         for session in medical_sessions:
             results[session.model] = []
         for index in tqdm(range(num_samples)):
-            symptoms = [symptom for symptom in medical_datasets.columns[:-2] if medical_datasets.loc[index, symptom]]
+            symptoms = [symptom for symptom in medical_datasets.columns[:-3] if medical_datasets.loc[index, symptom]]
             expected_disease = medical_datasets.loc[index]['prognosis'].lower()
             for session in medical_sessions:
                 symptom_string, response = self.eval_keyword_record(session,symptoms)
@@ -78,12 +77,13 @@ class MedicalSessionEvaluator():
         result_df = pd.DataFrame(results)
         return result_df
 
-    def rate(self, num_samples, result_df):
+    def rate(self, result_df):
+        num_samples = len(result_df)
         accuracy = []
         for model in result_df.columns[2:]:
             accuracy.append({'model':model,
                         'first_line_accuracy':0,
-                        'second_line_accuracy':0,
+                        'first_two_lines_accuracy':0,
                         'overall_accuracy':0})
         for index in tqdm(range(num_samples)):
             disease = result_df.loc[index, 'expected_disease']
@@ -96,10 +96,14 @@ class MedicalSessionEvaluator():
                 response = result_df.loc[index,model]
                 if disease in response.split('\n')[0]:
                     accuracy[i]['first_line_accuracy'] += 1/num_samples
-                elif disease in response.split('\n')[1]:
-                    accuracy[i]['second_line_accuracy'] += 1/num_samples
+                if disease in '\n'.join(response.split('\n')[:2]):
+                    accuracy[i]['first_two_lines_accuracy'] += 1 / num_samples
                 if disease in response:
                     accuracy[i]['overall_accuracy'] += 1/num_samples
+        for i,model in enumerate(result_df.columns[2:]):
+            overall_proportion = accuracy[i]['overall_accuracy']
+            accuracy[i]['Standard Deviation'] = (overall_proportion * (1-overall_proportion) / num_samples)**0.5
+            
         accuracy_df = pd.DataFrame(accuracy)
         accuracy_df.set_index('model', inplace=True)
         return accuracy_df
@@ -123,24 +127,29 @@ def main(task, push):
     ]
 
     if task == 'eval_symptom_dx':
-        num_samples = 100
+        num_samples = 212
 
         medical_datasets = load_dataset("oldflag/symptom_dx_test", split='train').to_pandas()
-        result_df = evaluator.eval_string_record(num_samples,medical_sessions,medical_datasets)
-        process_result(result_df,'ezuruce', f'medical_eval_symptom_dx_{num_samples}s', push)
+        result_df = evaluator.eval_string_records(num_samples,medical_sessions,medical_datasets)
+        process_result(result_df,'ezuruce', f'medical-eval-symptom-dx-{num_samples}s', push=True)
     elif task == 'eval_kaggle':
-        num_samples = 10
-
-        medical_datasets = load_dataset("ezuruce/medical-kaggle-dataset", split='train').to_pandas()
-        result_df = evaluator.eval_keyword_records(num_samples,medical_sessions,medical_datasets)
-        process_result(result_df,'ezuruce', f'medical_eval_kaggle_{num_samples}s', push)
+        df = load_dataset("ezuruce/medical-kaggle-dataset", split='train').to_pandas()
+        df = df[df.batch == 1].reset_index(drop=True)
+        num_samples = 400
+        result_df = evaluator.eval_keyword_records(num_samples,medical_sessions,df)
+        process_result(result_df,'ezuruce', f'medical-eval-kaggle-{num_samples}s', push)
 
     elif task == 'rate':
-        result1_df = load_dataset(f'ezuruce/medical_eval_symptom_dx_100s', split='train').to_pandas()
-        result2_df = load_dataset(f'ezuruce/medical_eval_kaggle_100s', split='train').to_pandas()
-        result_df = pd.concat([result1_df, result2_df ], axis=1)
+        result1_df = load_dataset(f'ezuruce/medical-eval-symptom-dx-212s', split='train').to_pandas()
+        result2_df = load_dataset(f'ezuruce/medical-eval-kaggle-400s', split='train').to_pandas()
+        result_df = pd.concat([result1_df, result2_df ], axis=0, ignore_index=True)
         ratings_df = evaluator.rate(result_df)
         print(ratings_df)
+        push = True
+        if push:
+            Dataset.from_pandas(ratings_df).push_to_hub('ezuruce/medical_eval_ratings_0219_v1')
+
+        process_result(result_df,'ezuruce', 'medical_eval_ratings_0219_v1', push)
 
 
 if __name__ == '__main__':
