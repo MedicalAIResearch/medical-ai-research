@@ -80,11 +80,15 @@ class MedicalSessionEvaluator():
     def rate(self, result_df):
         num_samples = len(result_df)
         accuracy = []
+        result_detail_df = result_df.copy()
         for model in result_df.columns[2:]:
             accuracy.append({'model':model,
-                        'first_line_accuracy':0,
-                        'first_two_lines_accuracy':0,
-                        'overall_accuracy':0})
+                        'accuracy1':0,
+                        'accuracy2':0,
+                        'accuracy_overall':0})
+            result_detail_df[f'{model}_accuracy1'] = None
+            result_detail_df[f'{model}_accuracy2'] = None
+            result_detail_df[f'{model}_accuracy_overall'] = None
         for index in tqdm(range(num_samples)):
             disease = result_df.loc[index, 'expected_disease']
             disease = clean_medical_phrase(disease)
@@ -95,13 +99,13 @@ class MedicalSessionEvaluator():
             for i,model in enumerate(result_df.columns[2:]):
                 response = result_df.loc[index,model]
                 if disease in response.split('\n')[0]:
-                    accuracy[i]['first_line_accuracy'] += 1/num_samples
+                    accuracy[i]['accuracy1'] += 1/num_samples
                 if disease in '\n'.join(response.split('\n')[:2]):
-                    accuracy[i]['first_two_lines_accuracy'] += 1 / num_samples
+                    accuracy[i]['accuracy2'] += 1 / num_samples
                 if disease in response:
-                    accuracy[i]['overall_accuracy'] += 1/num_samples
+                    accuracy[i]['accuracy_overall'] += 1/num_samples
         for i,model in enumerate(result_df.columns[2:]):
-            overall_proportion = accuracy[i]['overall_accuracy']
+            overall_proportion = accuracy[i]['accuracy_overall']
             accuracy[i]['Standard Deviation'] = (overall_proportion * (1-overall_proportion) / num_samples)**0.5
             
         accuracy_df = pd.DataFrame(accuracy)
@@ -135,7 +139,7 @@ def main(task, push):
     elif task == 'eval_kaggle':
         df = load_dataset("ezuruce/medical-kaggle-dataset", split='train').to_pandas()
         df = df[df.batch == 1].reset_index(drop=True)
-        num_samples = 400
+        num_samples = 1
         result_df = evaluator.eval_keyword_records(num_samples,medical_sessions,df)
         process_result(result_df,'ezuruce', f'medical-eval-kaggle-{num_samples}s', push)
 
