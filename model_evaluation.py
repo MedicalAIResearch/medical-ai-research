@@ -39,6 +39,8 @@ def clean_symptom_keywords(keywords):
     return keywords
 
 
+PROGNOSIS_COLUMN = 132
+
 class MedicalSessionEvaluator():
 
     def __init__(self):
@@ -83,7 +85,7 @@ class MedicalSessionEvaluator():
         for session in medical_sessions:
             results[session.model] = []
         for index in tqdm(range(num_samples)):
-            symptoms = [symptom for symptom in medical_datasets.columns[:-3] if medical_datasets.loc[index, symptom]]
+            symptoms = [symptom for symptom in medical_datasets.columns[:PROGNOSIS_COLUMN] if medical_datasets.loc[index, symptom]]
             expected_disease = medical_datasets.loc[index]['prognosis'].lower()
             for session in medical_sessions:
                 symptom_string, response = self.eval_keyword_record(session,symptoms)
@@ -137,6 +139,21 @@ def process_result(df, hub_org, hub_name, push):
     if push:
         Dataset.from_pandas(df).push_to_hub(hub_org + '/' + hub_name, private=True)
 
+import hashlib
+
+
+def get_signature(row):
+    num_str = ''
+    for symptom, value in row.to_dict().items():
+        if symptom == 'prognosis':
+            break
+        else:
+            num_str += str(value)
+    md5_hash = hashlib.md5()
+    md5_hash.update(num_str.encode('utf-8'))
+    md5_hash = md5_hash.hexdigest()[:7]
+    return md5_hash
+
 
 @click.command()
 @click.argument('task', type=click.Choice(['eval_symptom_dx','eval_kaggle', 'rate']))
@@ -153,6 +170,8 @@ def main(task, push):
         # read medical kaggle dataset, write medical kaggle dataset cleaned\
         df = load_dataset("ezuruce/medical-kaggle-dataset", split='train').to_pandas()
         df['prognosis'] = df.apply(lambda row: clean_prognosis(row.prognosis), axis=1)
+        df['signature'] = df.apply(lambda row: get_signature(row),axis = 1)
+
         process_result(df,'ezuruce', 'medical-kaggle-dataset-cleaned', push)
         
     elif task == 'eval_symptom_dx':
@@ -163,6 +182,7 @@ def main(task, push):
         process_result(result_df,'ezuruce', f'medical-eval-symptom-dx-{num_samples}s', push=True)
     elif task == 'eval_kaggle':
         df = load_dataset("ezuruce/medical-kaggle-dataset-cleaned", split='train').to_pandas()
+        assert df.columns.to_list()[PROGNOSIS_COLUMN] == 'prognosis'
         df = df[df.batch == 1].reset_index(drop=True)
         num_samples = 1
         result_df = evaluator.eval_keyword_records(num_samples,medical_sessions,df)
