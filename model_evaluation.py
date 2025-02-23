@@ -7,13 +7,30 @@ from typing import List
 import re
 
 
-def clean_medical_phrase(keyword):
+def clean_prognosis(keyword):
     # replace '_ ' with single space
     keyword = keyword.replace('_', ' ')
     keyword = keyword.strip()
     words = re.split(r'\s+', keyword)
     keyword = ' '.join(words)
     keyword = keyword.replace('diseae', 'disease')
+    keyword = keyword.replace('AIDS','hiv')
+    keyword = keyword.replace('(vertigo) Paroymsal Positional Vertigo','paroxysmal positional vertigo')
+    keyword = keyword.replace('Allergy','allergi')
+    keyword = keyword.replace('Chicken pox','chickenpox')
+    keyword = keyword.replace('Dimorphic hemmorhoids(piles)','hemorrhoids')
+    keyword = keyword.replace('Osteoarthristis','osteoarthritis')
+    keyword = keyword.replace('Paralysis (brain hemorrhage)','stroke')
+    keyword = keyword.replace('Heart attack','mycordial infarction')
+    return keyword
+
+
+def clean_medical_phrase(keyword):
+    # replace '_ ' with single space
+    keyword = keyword.replace('_', ' ')
+    keyword = keyword.strip()
+    words = re.split(r'\s+', keyword)
+    keyword = ' '.join(words)
     return keyword
 
 
@@ -86,12 +103,11 @@ class MedicalSessionEvaluator():
                         'accuracy1':0,
                         'accuracy2':0,
                         'accuracy_overall':0})
-            result_detail_df[f'{model}_accuracy1'] = None
-            result_detail_df[f'{model}_accuracy2'] = None
-            result_detail_df[f'{model}_accuracy_overall'] = None
+            result_detail_df[f'{model}_accuracy1'] = 0
+            result_detail_df[f'{model}_accuracy2'] = 0
+            result_detail_df[f'{model}_accuracy_overall'] = 0
         for index in tqdm(range(num_samples)):
             disease = result_df.loc[index, 'expected_disease']
-            disease = clean_medical_phrase(disease)
             if 'disease' in disease:
                 words = disease.split(' ')
                 words.remove('disease')
@@ -100,17 +116,20 @@ class MedicalSessionEvaluator():
                 response = result_df.loc[index,model]
                 if disease in response.split('\n')[0]:
                     accuracy[i]['accuracy1'] += 1/num_samples
+                    result_detail_df.loc[index, f'{model}_accuracy1'] = 1
                 if disease in '\n'.join(response.split('\n')[:2]):
                     accuracy[i]['accuracy2'] += 1 / num_samples
+                    result_detail_df.loc[index, f'{model}_accuracy2'] = 1
                 if disease in response:
                     accuracy[i]['accuracy_overall'] += 1/num_samples
+                    result_detail_df.loc[index, f'{model}_accuracy_overall'] = 1
         for i,model in enumerate(result_df.columns[2:]):
             overall_proportion = accuracy[i]['accuracy_overall']
             accuracy[i]['Standard Deviation'] = (overall_proportion * (1-overall_proportion) / num_samples)**0.5
             
         accuracy_df = pd.DataFrame(accuracy)
         accuracy_df.set_index('model', inplace=True)
-        return accuracy_df
+        return accuracy_df,result_detail_df
     
 
 def process_result(df, hub_org, hub_name, push):
@@ -130,14 +149,20 @@ def main(task, push):
         # TogetherAIMedicalSession()
     ]
 
-    if task == 'eval_symptom_dx':
+    if task == 'clean_dataset':
+        # read medical kaggle dataset, write medical kaggle dataset cleaned\
+        df = load_dataset("ezuruce/medical-kaggle-dataset", split='train').to_pandas()
+        df['prognosis'] = df.apply(lambda row: clean_prognosis(row.prognosis), axis=1)
+        process_result(df,'ezuruce', 'medical-kaggle-dataset-cleaned', push)
+        
+    elif task == 'eval_symptom_dx':
         num_samples = 212
 
         medical_datasets = load_dataset("oldflag/symptom_dx_test", split='train').to_pandas()
         result_df = evaluator.eval_string_records(num_samples,medical_sessions,medical_datasets)
         process_result(result_df,'ezuruce', f'medical-eval-symptom-dx-{num_samples}s', push=True)
     elif task == 'eval_kaggle':
-        df = load_dataset("ezuruce/medical-kaggle-dataset", split='train').to_pandas()
+        df = load_dataset("ezuruce/medical-kaggle-dataset-cleaned", split='train').to_pandas()
         df = df[df.batch == 1].reset_index(drop=True)
         num_samples = 1
         result_df = evaluator.eval_keyword_records(num_samples,medical_sessions,df)
