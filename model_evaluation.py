@@ -16,8 +16,12 @@ def clean_prognosis(keyword):
     keyword = keyword.replace('diseae', 'disease')
     keyword = keyword.replace('AIDS','hiv')
     keyword = keyword.replace('(vertigo) Paroymsal Positional Vertigo','paroxysmal positional vertigo')
+     # changed disease name to allergi because the rating function will mark the model response as correct if it contains allergic
     keyword = keyword.replace('Allergy','allergi')
+    keyword = keyword.replace('allergy','allergi')
+    keyword = keyword.replace('chicken pox','chickenpox')
     keyword = keyword.replace('Chicken pox','chickenpox')
+    keyword = keyword.replace('gastroesophageal reflux disease','gerd')
     keyword = keyword.replace('Dimorphic hemmorhoids(piles)','hemorrhoids')
     keyword = keyword.replace('Osteoarthristis','osteoarthritis')
     keyword = keyword.replace('Paralysis (brain hemorrhage)','stroke')
@@ -135,7 +139,6 @@ class MedicalSessionEvaluator():
     
 
 def process_result(df, hub_org, hub_name, push):
-    df.to_json(f'{hub_name}.temp.json')
     if push:
         Dataset.from_pandas(df).push_to_hub(hub_org + '/' + hub_name, private=True)
 
@@ -167,26 +170,29 @@ def main(task, push):
     ]
 
     if task == 'clean_dataset':
-        # read medical kaggle dataset, write medical kaggle dataset cleaned\
+        # read medical kaggle dataset, write medical kaggle dataset cleaned
         df = load_dataset("ezuruce/medical-kaggle-dataset", split='train').to_pandas()
         df['prognosis'] = df.apply(lambda row: clean_prognosis(row.prognosis), axis=1)
         df['signature'] = df.apply(lambda row: get_signature(row),axis = 1)
-
+        df = df.drop_duplicates(subset=['signature'], keep='first')
         process_result(df,'ezuruce', 'medical-kaggle-dataset-cleaned', push)
-        
-    elif task == 'eval_symptom_dx':
-        num_samples = 212
 
         medical_datasets = load_dataset("oldflag/symptom_dx_test", split='train').to_pandas()
+        medical_datasets['output_text'] = medical_datasets.apply(lambda row: clean_prognosis(row.output_text), axis=1)
+        process_result(medical_datasets,'ezuruce', 'symptom-dx-test-cleaned', push)
+        
+    elif task == 'eval_symptom_dx':
+
+        medical_datasets = load_dataset("ezuruce/symptom-dx-test-cleaned", split='train').to_pandas()
+        num_samples = len(medical_datasets)
         result_df = evaluator.eval_string_records(num_samples,medical_sessions,medical_datasets)
-        process_result(result_df,'ezuruce', f'medical-eval-symptom-dx-{num_samples}s', push=True)
+        process_result(result_df,'ezuruce', f'medical-eval-v2-symptom-dx-{num_samples}s', push=True)
     elif task == 'eval_kaggle':
         df = load_dataset("ezuruce/medical-kaggle-dataset-cleaned", split='train').to_pandas()
         assert df.columns.to_list()[PROGNOSIS_COLUMN] == 'prognosis'
-        df = df[df.batch == 1].reset_index(drop=True)
-        num_samples = 1
+        num_samples = len(df)
         result_df = evaluator.eval_keyword_records(num_samples,medical_sessions,df)
-        process_result(result_df,'ezuruce', f'medical-eval-kaggle-{num_samples}s', push)
+        process_result(result_df,'ezuruce', f'medical-eval-v2-kaggle-{num_samples}s', push)
 
     elif task == 'rate':
         result1_df = load_dataset(f'ezuruce/medical-eval-symptom-dx-212s', split='train').to_pandas()

@@ -112,6 +112,22 @@ class TogetherAIMedicalSession(MedicalSession):
     def __init__(self):
         MedicalSession.__init__(self,get_togetherai_response)
 
+class AverageMedicalSession():
+    def __init__(self, a: MedicalSession, b: MedicalSession):
+        self.a = a
+        self.b = b
+
+    def diagnose_disease(self, history, new_message, previous_diagnosis):
+        return self.a.diagnose_disease(history, new_message, previous_diagnosis)
+
+    def evaluate_risk(self, next_history, disease):
+        return self.a.evaluate_risk(self, next_history, disease)
+
+    def evaluate_urgency(self, next_history):
+        urgency = self._get_model_response(self.urgency_system_message,next_history)
+        return urgency
+
+    def chat(self):
 
 if __name__ == '__main__':
     medical_session = OpenAIMedicalSession()
