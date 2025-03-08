@@ -51,17 +51,19 @@ function analyzeSymptoms(userSymptoms: string[]): {
   diagnoses: Array<{
     disease: string;
     status: string;
-    matched_symptoms: string[];
   }>;
   recommendation: string;
+  risks: Array<string>;
+  urgency: string;
 } {
   // ... same analysis logic as previous Flask version ...
   return {
     diagnoses: [{
       disease: "disease_stub",
       status: "status_stub",
-      matched_symptoms: [],
     }],
-    recommendation: "recommendation_stub"
+    recommendation: "recommendation_stub",
+    risks: ['Stroke'],
+    urgency: 'Visit emergency room',
   }
 }
