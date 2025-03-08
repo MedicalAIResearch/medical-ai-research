@@ -55,6 +55,17 @@ export default function ChatInterface() {
     scrollToBottom();
   }, [messages]);
 
+  // Add initial greeting message when the component mounts
+  useEffect(() => {
+    setMessages([
+      {
+        sender: 'bot',
+        type: 'text',
+        content: 'Hello, I am Doctor Brandon. What brings you in today?',
+      },
+    ]);
+  }, []); // Empty dependency array ensures this runs only once on mount
+
   const sendMessage = async () => {
     if (!userInput.trim()) return;
 
