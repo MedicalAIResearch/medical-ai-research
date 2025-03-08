@@ -9,6 +9,11 @@ interface Diagnosis {
   matched_symptoms: string[];
 }
 
+interface RiskIndicator {
+  condition: string;
+  riskLevel: string;
+}
+
 interface ChatMessage {
   sender: 'user' | 'bot';
   type: 'text' | 'diagnosis' | 'recommendation';
@@ -19,12 +24,27 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [urgency, setUrgency] = useState<string>('');
+  const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
+  const [risks, setRisks] = useState<RiskIndicator[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const statusColors: { [key: string]: string } = {
     Diagnosed: 'bg-red-100 text-red-800',
     Likely: 'bg-yellow-100 text-yellow-800',
     'More information needed': 'bg-blue-100 text-blue-800',
+  };
+
+  const urgencyColors: { [key: string]: string } = {
+    'Visit emergency room': 'bg-red-500 text-white',
+    'Visit urgent care': 'bg-orange-500 text-white',
+    'Make a regular doctor appointment': 'bg-yellow-500 text-white',
+    'Continue to chat': 'bg-green-500 text-white',
+  };
+
+  const riskColors: { [key: string]: string } = {
+    Elevated: 'bg-yellow-100 text-yellow-800',
+    High: 'bg-red-100 text-red-800',
   };
 
   const scrollToBottom = () => {
@@ -57,11 +77,15 @@ export default function ChatInterface() {
 
       const data = await response.json();
 
-      // Add bot responses
+      // Update urgency, diagnoses, and risks
+      setUrgency(data.urgency);
+      setDiagnoses(data.diagnoses);
+      setRisks(data.risks);
+
+      // Add bot responses to chat
       setMessages(prev => [
         ...prev,
-        { sender: 'bot', type: 'diagnosis', content: data },
-        { sender: 'bot', type: 'recommendation', content: data.recommendation },
+        { sender: 'bot', type: 'text', content: data.text },
       ]);
     } catch (error) {
       console.error('Error:', error);
@@ -72,8 +96,9 @@ export default function ChatInterface() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      <div className="container mx-auto max-w-2xl p-4">
-        <div className="bg-white rounded-2xl shadow-xl">
+      <div className="container mx-auto max-w-6xl p-4 flex space-x-6">
+        {/* Chatbox */}
+        <div className="flex-1 bg-white rounded-2xl shadow-xl">
           {/* Header */}
           <div className="bg-blue-600 text-white p-4 rounded-t-2xl flex items-center space-x-3">
             <div className="h-12 w-12 bg-white rounded-full flex items-center justify-center">
@@ -102,7 +127,7 @@ export default function ChatInterface() {
                         : 'bg-gray-100 text-gray-800 self-start rounded-tl-none'
                     }`}
                   >
-                    { "msg_content_stub" /*msg.content */ }
+                    {msg.content as string}
                   </div>
                 )}
 
@@ -125,9 +150,6 @@ export default function ChatInterface() {
                             >
                               {disease.status}
                             </span>
-                          </div>
-                          <div className="mt-2 text-sm text-gray-600">
-                            Matched symptoms: {disease.matched_symptoms.join(', ')}
                           </div>
                         </div>
                       )
@@ -197,6 +219,77 @@ export default function ChatInterface() {
               This is not a substitute for professional medical advice
             </p>
           </div>
+        </div>
+
+        {/* Sidebar for Indicators */}
+        <div className="w-80 bg-white rounded-2xl shadow-xl p-6">
+          <h2 className="text-lg font-bold mb-4">Assessment Summary</h2>
+
+          {/* Urgency Indicator */}
+          {urgency && (
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-gray-600 mb-2">Urgency</h3>
+              <div
+                className={`p-3 rounded-lg text-center font-semibold ${
+                  urgencyColors[urgency]
+                }`}
+              >
+                {urgency}
+              </div>
+            </div>
+          )}
+
+          {/* Diagnoses */}
+          {diagnoses.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-gray-600 mb-2">Diagnoses</h3>
+              <div className="space-y-3">
+                {diagnoses.map((disease, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 bg-gray-50 rounded-lg shadow-sm"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium capitalize">
+                        {disease.disease.replace('_', ' ')}
+                      </span>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          statusColors[disease.status]
+                        }`}
+                      >
+                        {disease.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Risk Factors */}
+          {risks.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-600 mb-2">Risk Factors</h3>
+              <div className="space-y-3">
+                {risks.map((risk, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 bg-gray-50 rounded-lg shadow-sm flex items-center justify-between"
+                  >
+                    <span className="font-medium">{risk.condition}</span>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        riskColors[risk.riskLevel]
+                      }`}
+                    >
+                      {risk.riskLevel}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
