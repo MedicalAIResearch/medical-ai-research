@@ -127,7 +127,6 @@ class AverageMedicalSession():
         urgency = self._get_model_response(self.urgency_system_message,next_history)
         return urgency
 
-    def chat(self):
 
 if __name__ == '__main__':
     medical_session = OpenAIMedicalSession()
