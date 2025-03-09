@@ -69,10 +69,10 @@ export default function ChatInterface() {
   const sendMessage = async () => {
     if (!userInput.trim()) return;
 
-    // Add user message to the conversation
+    const userMessage: ChatMessage = { sender: 'user', type: 'text', content: userInput }
     const updatedMessages = [
       ...messages,
-      { sender: 'user', type: 'text', content: userInput },
+      userMessage,
     ];
     setMessages(updatedMessages);
     setUserInput('');
