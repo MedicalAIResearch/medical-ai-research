@@ -26,44 +26,13 @@ const DISEASE_DB: Record<string, DiseaseData> = {
 };
 
 export async function POST(request: Request) {
-  const { message } = await request.json();
-  const symptoms = extractSymptoms(message);
-  const analysis = analyzeSymptoms(symptoms);
-  
-  return NextResponse.json(analysis);
-}
-
-function extractSymptoms(text: string): string[] {
-  const symptoms: string[] = [];
-  const textLower = text.toLowerCase();
-  
-  for (const disease of Object.values(DISEASE_DB)) {
-    for (const symptom of disease.symptoms) {
-      if (textLower.includes(symptom)) {
-        symptoms.push(symptom);
-      }
-    }
-  }
-  return [...new Set(symptoms)];
-}
-
-function analyzeSymptoms(userSymptoms: string[]): {
-  diagnoses: Array<{
-    disease: string;
-    status: string;
-  }>;
-  recommendation: string;
-  risks: Array<string>;
-  urgency: string;
-} {
-  // ... same analysis logic as previous Flask version ...
-  return {
-    diagnoses: [{
-      disease: "disease_stub",
-      status: "status_stub",
-    }],
-    recommendation: "recommendation_stub",
-    risks: ['Stroke'],
+  const request_json = await request.json()
+  console.log(request_json)
+  const response = {
     urgency: 'Visit emergency room',
+    diagnoses: [{disease: 'flu', status: 'diagnosed'}],
+    risks: [{condition: 'diabete', riskLevel: 'high'}],
+    text: 'text,'
   }
+  return NextResponse.json(response);
 }

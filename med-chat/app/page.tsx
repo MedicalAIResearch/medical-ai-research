@@ -64,36 +64,36 @@ export default function ChatInterface() {
         content: 'Hello, I am Doctor Brandon. What brings you in today?',
       },
     ]);
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, []);
 
   const sendMessage = async () => {
     if (!userInput.trim()) return;
 
-    // Add user message
-    setMessages(prev => [
-      ...prev,
+    // Add user message to the conversation
+    const updatedMessages = [
+      ...messages,
       { sender: 'user', type: 'text', content: userInput },
-    ]);
-
-    const currentInput = userInput;
+    ];
+    setMessages(updatedMessages);
     setUserInput('');
     setIsTyping(true);
 
     try {
+      // Send the entire conversation history to the backend
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: currentInput }),
+        body: JSON.stringify({ conversation: updatedMessages }),
       });
 
       const data = await response.json();
 
-      // Update urgency, diagnoses, and risks
+      // Update state with the backend response
       setUrgency(data.urgency);
       setDiagnoses(data.diagnoses);
       setRisks(data.risks);
 
-      // Add bot responses to chat
+      // Add bot response to the conversation
       setMessages(prev => [
         ...prev,
         { sender: 'bot', type: 'text', content: data.text },
