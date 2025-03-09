@@ -15,8 +15,7 @@ interface RiskIndicator {
 }
 
 interface ChatMessage {
-  sender: 'user' | 'bot';
-  type: 'text' | 'diagnosis' | 'recommendation';
+  role: 'user' | 'assistant';
   content: string | { diagnoses: Diagnosis[]; recommendation: string };
 }
 
@@ -59,9 +58,8 @@ export default function ChatInterface() {
   useEffect(() => {
     setMessages([
       {
-        sender: 'bot',
-        type: 'text',
-        content: 'Hello, I am Doctor Brandon. What brings you in today?',
+        role: 'assistant',
+        content: 'Hello, I am Doctor Brandon. What brings you in today?'
       },
     ]);
   }, []);
@@ -69,7 +67,7 @@ export default function ChatInterface() {
   const sendMessage = async () => {
     if (!userInput.trim()) return;
 
-    const userMessage: ChatMessage = { sender: 'user', type: 'text', content: userInput }
+    const userMessage: ChatMessage = { role: 'user', content: userInput}
     const updatedMessages = [
       ...messages,
       userMessage,
@@ -93,10 +91,10 @@ export default function ChatInterface() {
       setDiagnoses(data.diagnoses);
       setRisks(data.risks);
 
-      // Add bot response to the conversation
+      // Add assistant response to the conversation
       setMessages(prev => [
         ...prev,
-        { sender: 'bot', type: 'text', content: data.text },
+        { role: 'assistant', content: data.text },
       ]);
     } catch (error) {
       console.error('Error:', error);
@@ -113,7 +111,7 @@ export default function ChatInterface() {
           {/* Header */}
           <div className="bg-blue-600 text-white p-4 rounded-t-2xl flex items-center space-x-3">
             <div className="h-12 w-12 bg-white rounded-full flex items-center justify-center">
-              🩺
+              🩺  Content-Type: application/json
             </div>
             <div>
               <h1 className="text-xl font-bold">MedChat Assistant</h1>
@@ -127,57 +125,18 @@ export default function ChatInterface() {
               <div
                 key={index}
                 className={`flex flex-col ${
-                  msg.sender === 'user' ? 'items-end' : 'items-start'
+                  msg.role === 'user' ? 'items-end' : 'items-start'
                 }`}
               >
-                {msg.type === 'text' && (
-                  <div
-                    className={`p-4 rounded-2xl max-w-[80%] transition-all duration-300 ${
-                      msg.sender === 'user'
-                        ? 'bg-blue-500 text-white self-end rounded-tr-none'
-                        : 'bg-gray-100 text-gray-800 self-start rounded-tl-none'
-                    }`}
-                  >
-                    {msg.content as string}
-                  </div>
-                )}
-
-                {msg.type === 'diagnosis' && (
-                  <div className="w-full space-y-4">
-                    {(msg.content as { diagnoses: Diagnosis[] }).diagnoses.map(
-                      (disease, idx) => (
-                        <div
-                          key={idx}
-                          className="p-4 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow"
-                        >
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-lg capitalize">
-                              {disease.disease.replace('_', ' ')}
-                            </h3>
-                            <span
-                              className={`px-3 py-1 rounded-full text-sm ${
-                                statusColors[disease.status]
-                              }`}
-                            >
-                              {disease.status}
-                            </span>
-                          </div>
-                        </div>
-                      )
-                    )}
-                  </div>
-                )}
-
-                {msg.type === 'recommendation' && (
-                  <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg w-full">
-                    <h3 className="font-bold text-yellow-800 mb-2">
-                      Healthcare Recommendation
-                    </h3>
-                    <p className="text-yellow-700">
-                      {msg.content as string}
-                    </p>
-                  </div>
-                )}
+                <div
+                  className={`p-4 rounded-2xl max-w-[80%] transition-all duration-300 ${
+                    msg.role === 'user'
+                      ? 'bg-blue-500 text-white self-end rounded-tr-none'
+                      : 'bg-gray-100 text-gray-800 self-start rounded-tl-none'
+                  }`}
+                >
+                  {msg.content as string}
+                </div>
               </div>
             ))}
             
