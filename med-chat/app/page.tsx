@@ -227,7 +227,7 @@ export default function ChatInterface() {
                     className="p-3 bg-gray-50 rounded-lg shadow-sm"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium capitalize">
+                      <span className="font-medium text-gray-900 capitalize"> {/* Added text-gray-900 */}
                         {disease.name}
                       </span>
                       <span
@@ -254,7 +254,9 @@ export default function ChatInterface() {
                     key={idx}
                     className="p-3 bg-gray-50 rounded-lg shadow-sm flex items-center justify-between"
                   >
-                    <span className="font-medium">{risk.condition}</span>
+                    <span className="font-medium text-gray-900"> {/* Added text-gray-900 */}
+                      {risk.condition}
+                    </span>
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${
                         riskColors[risk.riskLevel]
