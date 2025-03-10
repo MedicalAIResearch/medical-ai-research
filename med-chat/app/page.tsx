@@ -112,7 +112,7 @@ export default function ChatInterface() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      <div className="container mx-auto max-w-6xl p-4 flex space-x-6">
+      <div className="container mx-auto max-w-6xl p-4 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
         {/* Chatbox */}
         <div className="flex-1 bg-white rounded-2xl shadow-xl">
           {/* Header */}
@@ -121,7 +121,7 @@ export default function ChatInterface() {
               <Stethoscope className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">MedChat Assistant</h1>
+              <h1 className="text-xl font-bold">Medical Assistant</h1>
               <p className="text-sm opacity-90">AI-powered symptom assessment</p>
             </div>
           </div>
@@ -199,7 +199,7 @@ export default function ChatInterface() {
         </div>
 
         {/* Sidebar for Indicators */}
-        <div className="w-80 bg-white rounded-2xl shadow-xl p-6">
+        <div className="w-full md:w-80 bg-white rounded-2xl shadow-xl p-6">
           <h2 className="text-lg font-bold mb-4">Assessment Summary</h2>
 
           {/* Urgency Indicator */}
