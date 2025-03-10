@@ -86,7 +86,7 @@ async function get_model_response(messages: ChatMessage[], stop=null, max_tokens
   const response = await fetch(url, {method, headers, body})
   const data = await response.json()
   const content = data["choices"][0]["message"]["content"]
-  let cleaned_content = content.trim()
+  const cleaned_content = content.trim()
   return cleaned_content
 }
 
