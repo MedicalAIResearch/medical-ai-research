@@ -171,7 +171,7 @@ export default function ChatInterface() {
                 onChange={(e) => setUserInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                 placeholder="Describe your symptoms..."
-                className="flex-1 p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="flex-1 p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-800 bg-white"
               />
               <button
                 onClick={sendMessage}
