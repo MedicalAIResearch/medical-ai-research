@@ -120,6 +120,6 @@ export async function POST(request: Request) {
       return match ? {name: match[2], status: match[3]} : null;
   }).filter(Boolean);
   const response = {urgency, diagnosis, risks, text}
-  console.log({response})
+  console.log({response: JSON.stringify(response)})
   return NextResponse.json(response);
 }
