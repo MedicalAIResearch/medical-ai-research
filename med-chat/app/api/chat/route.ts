@@ -49,9 +49,8 @@ const AZURE_OPENAI_HOST = process.env.AZURE_OPENAI_HOST
 const AZURE_OPENAI_KEY = process.env.AZURE_OPENAI_KEY
 
 interface ChatMessage {
-  sender: 'user' | 'bot';
-  type: 'text' | 'diagnosis' | 'recommendation';
-  content: string | { diagnoses: Diagnosis[]; recommendation: string };
+  role: 'user' | 'assistant' | 'system';
+  content: string;
 }
 
 
@@ -85,7 +84,9 @@ async function get_model_response(messages: ChatMessage[], stop=null, max_tokens
 export async function POST(request: Request) {
   const request_json = await request.json()
   const messages = request_json.conversation;
-  const text = await get_model_response(messages);
+  const chatMesssages = [{'role': 'system','content':chat_system_message}, ...messages]
+  const urgencyMessage = [{'role': 'system','content':chat_system_message}, ...messages]
+  const text = await get_model_response(chatMesssages);
   const response = {
     urgency: 'Visit emergency room',
     diagnoses: [{disease: 'flu', status: 'diagnosed'}],
