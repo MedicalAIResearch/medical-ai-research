@@ -16,7 +16,7 @@ interface RiskIndicator {
 
 interface ChatMessage {
   role: 'user' | 'assistant';
-  content: string | { diagnoses: Diagnosis[]; recommendation: string };
+  content: string;
 }
 
 export default function ChatInterface() {
