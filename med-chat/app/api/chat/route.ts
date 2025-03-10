@@ -12,10 +12,9 @@ Maintain ethical, unbiased, and privacy-conscious responses at all times. Answer
 const chatSystemMessage = {'role': 'system','content': chatSystemText}
 
 
-const disease = 'Stroke'
-
-const riskSystemText = `You are a medical AI assistant trained to assess the risk of ${disease} based on patient data. Your goal is to analyze information gathered from conversations, including age, family history, lifestyle factors, and medical test results, to provide a calculated risk factor for specific diseases.
-Ensure risk assessments are based on reliable medical correlations and statistical models. Respond with [LOW], [MEDIUM] or [HIGH] or [MORE_INFO] if you need more information. Do not ask any questions, only respond with these four answers.
+function getRiskSystemText(condition: string): ChatMessage {
+  const riskSystemText = `You are a medical AI assistant trained to assess the risk of ${condition} or being diagnosed with ${condition} which ever is more likely based on patient data. Your goal is to analyze information gathered from conversations, including age, family history, lifestyle factors, and medical test results, to provide a calculated risk factor for specific diseases.
+Ensure risk assessments are based on reliable medical correlations and statistical models. Respond with [LOW], [MEDIUM] or [HIGH] or [MORE_INFO]. If you need more information. Do not ask any questions, only respond with these four answers.
 Example Response 1:
 [LOW]
 Example Response 2:
@@ -25,8 +24,9 @@ Example Response 3:
 Example Response 4:
 [MORE_INFO]
 `
-
-const riskSystemMessage = {'role':'system','content':riskSystemText}
+  const riskSystemMessage = {role: 'system', content: riskSystemText}
+  return riskSystemMessage as ChatMessage
+}
 
 const diagnosisSystemText = `
 You are a medical AI assistant trained to analyze patient data and suggest potential conditions based on symptoms, medical history, and lifestyle factors.
@@ -38,22 +38,32 @@ If more then one is [TRUE] you must set one as [ALSO_POSSIBLE]
 Example Response:
     1. Disease A - [TRUE]
     2. Disease B - [ALSO_POSSIBLE]
-    3. Disease C - [MOREINFO]`
+    3. Disease C - [MORE_INFO]`
 
 
 const diagnosisSystemMessage = {role:'system',content: diagnosisSystemText}
 
 const urgencySystemText = `You are a medical AI assistant assessing whether a patient's symptoms are urgent or not. 
 Base your response on medical patterns and provide clear guidance based on the symptoms provided.
-Return one of the following responses:
-[EMERGENCY] Go to Emergency Room (life-threatening).
-[URGENT_CARE] Seek urgent care soon (serious but not life-threatening).
-[PRIMARY_CARE] Schedule an appointment (non-urgent concern).
-[MONITOR] Watch symptoms and seek care if they worsen.
-[SAFE] No medical attention needed.
-Example:
-User: I have a rash.
-Response: [MONITOR] Watch symptoms and seek care if they worsen.`
+
+### **STRICT RESPONSE FORMAT**
+You MUST return one of the following responses EXACTLY as written (do NOT generate any other text):
+- [EMERGENCY] Go to Emergency Room (life-threatening).
+- [URGENT_CARE] Seek urgent care soon (serious but not life-threatening).
+- [PRIMARY_CARE] Schedule an appointment (non-urgent concern).
+- [MONITOR] Watch symptoms and seek care if they worsen.
+- [SAFE] No medical attention needed.
+
+### **Example Responses**
+User: I have a rash.  
+Response: [MONITOR] Watch symptoms and seek care if they worsen.  
+
+User: I have 42C fever for 10 days.  
+Response: [EMERGENCY] Go to Emergency Room (life-threatening).  
+
+User: I have a cough.  
+Response: [MONITOR] Watch symptoms and seek care if they worsen.  
+`
 
 const urgencySystemMessage = {role: 'system', content:urgencySystemText}
 
@@ -100,17 +110,26 @@ function getUrgency(urgencyResponse: string) {
   return {code, text}
 }
 
+async function getRisk(condition: string, messages: ChatMessage[]) {
+  const riskSystemMessage = getRiskSystemText(condition)
+  const riskMessages = [riskSystemMessage, ...messages];
+  let riskLevel = await get_model_response(riskMessages);
+  if(!['[LOW]', '[MEDIUM]', '[HIGH]'].includes(riskLevel)) {
+    riskLevel = '[MORE_INFO]'
+  }
+  const risk = {condition, riskLevel}
+  return risk
+}
+
 
 export async function POST(request: Request) {
   const request_json = await request.json()
   const messages = request_json.conversation;
   const chatMessages = [chatSystemMessage, ...messages];
-  const riskMessages = [riskSystemMessage, ...messages];
   const urgencyMessages = [urgencySystemMessage, ...messages];
   const diagnosisMessages = [diagnosisSystemMessage, ...messages.slice(0,-1), messages[messages.length-1]];
   const text = await get_model_response(chatMessages);
-  const risk = await get_model_response(riskMessages);
-  const risks = [{condition: 'stroke', riskLevel: risk}]
+  const risks = [await getRisk('Hypertension', messages), await getRisk('Diabetes', messages), await getRisk('Depression', messages)]
   const urgencyResponse = await get_model_response(urgencyMessages);
   const urgency = getUrgency(urgencyResponse)
   const diagnosisResponse = await get_model_response(diagnosisMessages);
