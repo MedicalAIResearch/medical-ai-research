@@ -46,14 +46,14 @@ const diagnosisSystemMessage = {role:'system',content: diagnosisSystemText}
 const urgencySystemText = `You are a medical AI assistant assessing whether a patient's symptoms are urgent or not. 
 Base your response on medical patterns and provide clear guidance based on the symptoms provided.
 Return one of the following responses:
-[EMERGENCY] → Go to the hospital immediately (life-threatening).
-[URGENT_CARE] → Seek urgent care soon (serious but not life-threatening).
-[PRIMARY_CARE] → Schedule an appointment with a doctor (non-urgent concern).
-[MONITOR] → Watch symptoms and seek care if they worsen.
-[SAFE] → No medical attention needed.
+[EMERGENCY] Go to Emergency Room (life-threatening).
+[URGENT_CARE] Seek urgent care soon (serious but not life-threatening).
+[PRIMARY_CARE] Schedule an appointment (non-urgent concern).
+[MONITOR] Watch symptoms and seek care if they worsen.
+[SAFE] No medical attention needed.
 Example:
 User: I have a rash.
-Response: [MONITOR] → Watch symptoms and seek care if they worsen`
+Response: [MONITOR] Watch symptoms and seek care if they worsen.`
 
 const urgencySystemMessage = {role: 'system', content:urgencySystemText}
 
@@ -88,9 +88,19 @@ async function get_model_response(messages: ChatMessage[], stop=null, max_tokens
   const data = await response.json()
   console.log('data',data)
   const content = data["choices"][0]["message"]["content"]
-  let cleaned_content = content.trim('`')
-  cleaned_content = cleaned_content.trimStart('json')
+  let cleaned_content = content.trim()
   return cleaned_content
+}
+
+
+function getUrgency(urgencyResponse: string) {
+  const match = urgencyResponse.match(/\[(.*?)\] (.*)/);
+
+  // Get the extracted code and text separately
+  const code = match ? match[1] : null;
+  const textRaw = match ? match[2] : urgencyResponse;
+  const text = textRaw.trim()
+  return {code, text}
 }
 
 
@@ -104,7 +114,8 @@ export async function POST(request: Request) {
   const text = await get_model_response(chatMessages);
   const risk = await get_model_response(riskMessages);
   const risks = [{condition: 'stroke', riskLevel: risk}]
-  const urgency = await get_model_response(urgencyMessages);
+  const urgencyResponse = await get_model_response(urgencyMessages);
+  const urgency = getUrgency(urgencyResponse)
   const diagnosisResponse = await get_model_response(diagnosisMessages);
   const diagnosis = diagnosisResponse.split("\n").map(
     (line:string) => {

@@ -13,6 +13,11 @@ interface RiskIndicator {
   riskLevel: string;
 }
 
+interface Urgency {
+  code: string;
+  text: string
+}
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -22,7 +27,7 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [urgency, setUrgency] = useState<string>('');
+  const [urgency, setUrgency] = useState<Urgency>({});
   const [diagnosis, setDiagnosis] = useState<Diagnosis[]>([]);
   const [risks, setRisks] = useState<RiskIndicator[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -34,11 +39,11 @@ export default function ChatInterface() {
   };
 
   const urgencyColors: { [key: string]: string } = {
-    'Visit emergency room': 'bg-red-500 text-white',
-    'Visit urgent care': 'bg-orange-500 text-white',
-    'Make a regular doctor appointment': 'bg-yellow-500 text-white',
-    'Continue to chat': 'bg-green-500 text-white',
-  };
+    'EMERGENCY': 'bg-red-500 text-white',
+    'URGENT_CARE': 'bg-orange-500 text-white',
+    'PRIMARY_CARE': 'bg-yellow-500 text-white',
+    'MONITOR': 'bg-blue-400 text-white',
+    'SAFE': 'bg-green-500 text-white'   };
 
   const riskColors: { [key: string]: string } = {
     Elevated: 'bg-yellow-100 text-yellow-800',
@@ -200,10 +205,10 @@ export default function ChatInterface() {
               <h3 className="text-sm font-semibold text-gray-600 mb-2">Urgency</h3>
               <div
                 className={`p-3 rounded-lg text-center font-semibold ${
-                  urgencyColors[urgency]
+                  urgencyColors[urgency.code]
                 }`}
               >
-                {urgency}
+                {urgency.text}
               </div>
             </div>
           )}
