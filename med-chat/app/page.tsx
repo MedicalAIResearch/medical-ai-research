@@ -47,9 +47,11 @@ export default function ChatInterface() {
     'SAFE': 'bg-green-500 text-white'   };
 
   const riskColors: { [key: string]: string } = {
-    Elevated: 'bg-yellow-100 text-yellow-800',
-    High: 'bg-red-100 text-red-800',
-  };
+    '[LOW]': 'bg-green-100 text-green-800',
+    '[MEDIUM]': 'bg-yellow-100 text-yellow-800',
+    '[HIGH]': 'bg-red-100 text-red-800',
+    '[MORE_INFO]': 'bg-gray-100 text-gray-800'
+  }
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
