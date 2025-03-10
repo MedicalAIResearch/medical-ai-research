@@ -29,16 +29,15 @@ Example Response 4:
 }
 
 const diagnosisSystemText = `
-You are a medical AI assistant trained to analyze patient data and suggest potential conditions based on symptoms, medical history, and lifestyle factors.
-Your goal is to evaluate given conversational data as well as the diagnosis at that point and provide a new diagnosis based off new data if there is any.
 Select a diseases that you feel will be of utmost importance and are the most risky.
-Respond with only the diseases and a [TRUE] if they have been confirmed to have the disease or [MORE_INFO] if you do not have enough information.
+Respond with only the diseases and a [TRUE] or [FALSE] if they have been confirmed or not confirmed to have the disease or [MORE_INFO] if you do not have enough information.
+You are a medical AI assistant trained to analyze patient data and suggest potential conditions based on symptoms, medical history, and lifestyle factors. Your goal is to evaluate given conversational data as well as the diagnosis at that point and provide a new diagnosis based off new data if there is any.
 If more then one is [TRUE] you must set one as [ALSO_POSSIBLE]
-1. Base assessments on medical correlations and established patterns.
+1. Base assessments on medical correlations and established patterns. When these similar diseases are no longer possible change them to [FALSE].
 Example Response:
-    1. Disease A - [TRUE]
-    2. Disease B - [ALSO_POSSIBLE]
-    3. Disease C - [MORE_INFO]`
+1. Disease A - [TRUE]
+2. Disease B - [FALSE]
+3. Disease C - [MORE_INFO]`
 
 
 const diagnosisSystemMessage = {role:'system',content: diagnosisSystemText}
