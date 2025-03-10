@@ -4,9 +4,8 @@
 import { useState, useRef, useEffect } from 'react';
 
 interface Diagnosis {
-  disease: string;
+  name: string;
   status: string;
-  matched_symptoms: string[];
 }
 
 interface RiskIndicator {
@@ -24,14 +23,14 @@ export default function ChatInterface() {
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [urgency, setUrgency] = useState<string>('');
-  const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
+  const [diagnosis, setDiagnosis] = useState<Diagnosis[]>([]);
   const [risks, setRisks] = useState<RiskIndicator[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const statusColors: { [key: string]: string } = {
-    Diagnosed: 'bg-red-100 text-red-800',
-    Likely: 'bg-yellow-100 text-yellow-800',
-    'More information needed': 'bg-blue-100 text-blue-800',
+    TRUE: 'bg-red-100 text-red-800',
+    ALSO_POSSIBLE: 'bg-yellow-100 text-yellow-800',
+    MORE_INFO: 'bg-blue-100 text-blue-800',
   };
 
   const urgencyColors: { [key: string]: string } = {
@@ -88,7 +87,7 @@ export default function ChatInterface() {
 
       // Update state with the backend response
       setUrgency(data.urgency);
-      setDiagnoses(data.diagnoses);
+      setDiagnosis(data.diagnosis);
       setRisks(data.risks);
 
       // Add assistant response to the conversation
@@ -209,19 +208,19 @@ export default function ChatInterface() {
             </div>
           )}
 
-          {/* Diagnoses */}
-          {diagnoses.length > 0 && (
+          {/* Diagnosis */}
+          {diagnosis.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-600 mb-2">Diagnoses</h3>
+              <h3 className="text-sm font-semibold text-gray-600 mb-2">Diagnosis</h3>
               <div className="space-y-3">
-                {diagnoses.map((disease, idx) => (
+                {diagnosis.map((disease, idx) => (
                   <div
                     key={idx}
                     className="p-3 bg-gray-50 rounded-lg shadow-sm"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium capitalize">
-                        {disease.disease.replace('_', ' ')}
+                        {disease.name}
                       </span>
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
