@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { Stethoscope } from "lucide-react";
 
 interface Diagnosis {
   name: string;
@@ -115,7 +116,7 @@ export default function ChatInterface() {
           {/* Header */}
           <div className="bg-blue-600 text-white p-4 rounded-t-2xl flex items-center space-x-3">
             <div className="h-12 w-12 bg-white rounded-full flex items-center justify-center">
-              🩺  Content-Type: application/json
+              <Stethoscope className="h-6 w-6 text-blue-600" />
             </div>
             <div>
               <h1 className="text-xl font-bold">MedChat Assistant</h1>
