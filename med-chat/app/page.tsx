@@ -200,8 +200,7 @@ export default function ChatInterface() {
 
         {/* Sidebar for Indicators */}
         <div className="w-full md:w-80 bg-white rounded-2xl shadow-xl p-6">
-          <h2 className="text-lg font-bold mb-4">Assessment Summary</h2>
-
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Assessment Summary</h2>
           {/* Urgency Indicator */}
           {urgency && (
             <div className="mb-6">
