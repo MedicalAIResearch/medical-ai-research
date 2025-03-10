@@ -58,8 +58,8 @@ Response: [MONITOR] Watch symptoms and seek care if they worsen.`
 const urgencySystemMessage = {role: 'system', content:urgencySystemText}
 
 
-const AZURE_OPENAI_HOST = process.env.AZURE_OPENAI_HOST
-const AZURE_OPENAI_KEY = process.env.AZURE_OPENAI_KEY
+const AZURE_OPENAI_HOST = process.env.AZURE_OPENAI_HOST as string
+const AZURE_OPENAI_KEY = process.env.AZURE_OPENAI_KEY as string
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
