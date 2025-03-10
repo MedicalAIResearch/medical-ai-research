@@ -83,10 +83,8 @@ async function get_model_response(messages: ChatMessage[], stop=null, max_tokens
   }
   const method = 'POST';
   const body =JSON.stringify({messages: messages, ...generation_params})
-  console.log('fetch', url,method,headers, body)
   const response = await fetch(url, {method, headers, body})
   const data = await response.json()
-  console.log('data',data)
   const content = data["choices"][0]["message"]["content"]
   let cleaned_content = content.trim()
   return cleaned_content
@@ -98,8 +96,7 @@ function getUrgency(urgencyResponse: string) {
 
   // Get the extracted code and text separately
   const code = match ? match[1] : null;
-  const textRaw = match ? match[2] : urgencyResponse;
-  const text = textRaw.trim()
+  const text = urgencyResponse
   return {code, text}
 }
 
@@ -123,5 +120,6 @@ export async function POST(request: Request) {
       return match ? {name: match[2], status: match[3]} : null;
   }).filter(Boolean);
   const response = {urgency, diagnosis, risks, text}
+  console.log({response})
   return NextResponse.json(response);
 }
