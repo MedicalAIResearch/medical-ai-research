@@ -28,7 +28,7 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [urgency, setUrgency] = useState<Urgency>({});
+  const [urgency, setUrgency] = useState<Urgency>();
   const [diagnosis, setDiagnosis] = useState<Diagnosis[]>([]);
   const [risks, setRisks] = useState<RiskIndicator[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
